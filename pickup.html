@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGo – Pick-up</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head><body>
+<header class="app">
+      <div class="brand"><span class="logo">🌱</span><strong>SegreGo</strong></div>
+      <nav><a href="index.html" class="">🌿 Levels</a><a href="games.html" class="">🎮 Games</a><a href="rewards.html" class="">🎁 Rewards</a><a href="course.html" class="">📚 Course</a><a href="pickup.html" class="active">🚚 Pick-up</a></nav>
+      <div class="row">
+        <span class="tag">👑 <b id="crownCount">0</b></span>
+        <span class="tag">⭐ <b id="pointCount">0</b></span>
+        <button class="btn ghost" id="btnCert" onclick="askNameAndOpenCert(true)" disabled>🎓 Certificate</button>
+      </div>
+    </header>
+<main class="container">
+  <h2>Schedule a Pick‑up</h2>
+  <div class="card">
+    <div class="grid two">
+      <label>Location <input id="pkLocation" class="input" placeholder="Apartment / Street / City"></label>
+      <label>Waste Type
+        <select id="pkType" class="input">
+          <option>Wet</option><option>Dry</option><option>E‑waste</option><option>Bulk</option>
+        </select>
+      </label>
+    </div>
+    <div class="grid two" style="margin-top:10px">
+      <div>
+        <h4>Choose Date (next 14 days)</h4>
+        <div id="dateGrid" class="grid7"></div>
+      </div>
+      <div>
+        <h4>Choose Time Slot</h4>
+        <div id="timeGrid" class="gridSlots"></div>
+      </div>
+    </div>
+    <button class="btn primary" onclick="bookPickup()">Book Pick‑up</button>
+    <p id="pkMsg" class="muted"></p>
+  </div>
+  <div class="card">
+    <h3>Your Bookings</h3>
+    <div id="pkList"></div>
+  </div>
+</main>
+<footer>SegreGo © 2025 • Learn • Play • Earn • Sustain</footer>
+<script>
+
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}
+
+function renderPickup(){
+  const today=new Date();
+  const dates=[...Array(14)].map((_,i)=>{const d=new Date(today);d.setDate(today.getDate()+i);return {key:d.toISOString().slice(0,10),label:d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})};});
+  const dg=document.getElementById('dateGrid'); dg.innerHTML=''; dates.forEach(d=>{const el=document.createElement('button');el.className='date';el.textContent=d.label;el.dataset.key=d.key;el.onclick=()=>{document.querySelectorAll('.date').forEach(x=>x.classList.remove('active'));el.classList.add('active');selectedDate=d.key;};dg.appendChild(el);});
+  const tg=document.getElementById('timeGrid'); tg.innerHTML=''; ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'].forEach(t=>{const el=document.createElement('button');el.className='slot';el.textContent=t;el.onclick=()=>{document.querySelectorAll('.slot').forEach(x=>x.classList.remove('active'));el.classList.add('active');selectedTime=t;};tg.appendChild(el);});
+  renderBookings();
+}
+let selectedDate=null, selectedTime=null;
+function bookPickup(){
+  const loc=document.getElementById('pkLocation').value.trim();
+  const type=document.getElementById('pkType').value;
+  const msg=document.getElementById('pkMsg');
+  if(!loc||!selectedDate||!selectedTime){msg.textContent='Please select location, date, and time.';return;}
+  const id=Math.random().toString(36).slice(2,8);
+  const rec={id,loc,type,date:selectedDate,time:selectedTime};
+  bookings.push(rec); save('sg_bookings',bookings);
+  msg.textContent='Pickup booked! '+rec.date+' at '+rec.time+' • '+type+' • '+loc;
+  selectedDate=null; selectedTime=null;
+  document.querySelectorAll('.date').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.slot').forEach(x=>x.classList.remove('active'));
+  renderBookings();
+}
+function renderBookings(){
+  const list=document.getElementById('pkList'); if(!bookings.length){list.innerHTML='<p class="muted">No bookings yet.</p>'; return;}
+  list.innerHTML=bookings.map(b=>`<div class='booking'>📅 ${b.date} • ⏰ ${b.time} • ${b.type} • 📍 ${b.loc}</div>`).join('');
+}
+renderPickup();
+</script>
+</body></html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGo – Games</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head><body>
+<header class="app">
+      <div class="brand"><span class="logo">🌱</span><strong>SegreGo</strong></div>
+      <nav><a href="index.html" class="">🌿 Levels</a><a href="games.html" class="active">🎮 Games</a><a href="rewards.html" class="">🎁 Rewards</a><a href="course.html" class="">📚 Course</a><a href="pickup.html" class="">🚚 Pick-up</a></nav>
+      <div class="row">
+        <span class="tag">👑 <b id="crownCount">0</b></span>
+        <span class="tag">⭐ <b id="pointCount">0</b></span>
+        <button class="btn ghost" id="btnCert" onclick="askNameAndOpenCert(true)" disabled>🎓 Certificate</button>
+      </div>
+    </header>
+<main class="container">
+  <h2>Games</h2>
+  <div class="chips">
+    <button class="chip active" data-game="dragdrop">Drag & Drop</button>
+    <button class="chip" data-game="speedtap">Wet vs Dry – Speed Tap</button>
+    <button class="chip" data-game="quickquiz">Quick Quiz</button>
+    <button class="chip" data-game="memory">Memory Match</button>
+  </div>
+
+  <section id="game-dragdrop" class="card">
+    <p>Drag items to the correct bin.</p>
+    <div class="bins">
+      <div id="wetBin" class="bin" ondrop="drop(event,'wet')" ondragover="event.preventDefault()">🪣 Wet</div>
+      <div id="dryBin" class="bin" ondrop="drop(event,'dry')" ondragover="event.preventDefault()">🧺 Dry</div>
+    </div>
+    <div id="dragItems" class="items"></div>
+    <p id="ddScore" class="tag">Score: <b>0</b></p>
+  </section>
+
+  <section id="game-speedtap" class="card" style="display:none">
+    <p>Tap the correct bin for the shown item. 10 rounds!</p>
+    <div class="big" id="stItem">🍌</div>
+    <div class="row">
+      <button class="btn primary" onclick="stAnswer('wet')">Wet</button>
+      <button class="btn primary" onclick="stAnswer('dry')">Dry</button>
+    </div>
+    <p id="stInfo" class="tag">Round 1 / 10 • Score: 0</p>
+  </section>
+
+  <section id="game-quickquiz" class="card" style="display:none">
+    <p>Answer quick multiple‑choice questions. +1 point per correct answer.</p>
+    <div id="qqWrap"></div>
+  </section>
+
+  <section id="game-memory" class="card" style="display:none">
+    <p>Flip two cards to find matching pairs. Earn points for each match.</p>
+    <div id="memGrid" class="grid auto"></div>
+    <p id="memInfo" class="tag">Matches: 0</p>
+  </section>
+</main>
+<footer>SegreGo © 2025 • Learn • Play • Earn • Sustain</footer>
+<script>
+
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}
+
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); ch.classList.add('active');
+  const id=ch.dataset.game; document.querySelectorAll('main section.card').forEach(s=>s.style.display='none'); document.getElementById('game-'+id).style.display='block';
+}));
+
+const itemsAll=[
+  {id:'leaf',e:'🍃',t:'wet'},{id:'banana',e:'🍌',t:'wet'},{id:'paper',e:'📄',t:'dry'},
+  {id:'bottle',e:'🥤',t:'dry'},{id:'fish',e:'🐟',t:'wet'},{id:'can',e:'🥫',t:'dry'}
+];
+
+function resetDrag(){
+  const items=document.getElementById('dragItems');items.innerHTML='';
+  document.getElementById('wetBin').innerHTML='🪣 Wet'; document.getElementById('dryBin').innerHTML='🧺 Dry';
+  document.querySelector('#ddScore b').textContent='0'; let score=0;
+  shuffle([...itemsAll]).forEach(obj=>{const el=document.createElement('div');el.textContent=obj.e;el.className='dr';el.draggable=true;el.id='dr-'+obj.id;el.dataset.type=obj.t;el.ondragstart=e=>e.dataTransfer.setData('text/plain',el.id);items.appendChild(el);});
+  window.drop=(e,bin)=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');const el=document.getElementById(id);if(!el)return;if(el.dataset.type===bin){e.target.appendChild(el);score++;points++;save('sg_points',points);renderStats();document.querySelector('#ddScore b').textContent=score;}else alert('Oops! Wrong bin.');};
+}
+resetDrag();
+
+let stRound=0,stScore=0,stSeq=[];function stReset(){stRound=0;stScore=0;stSeq=shuffle([...itemsAll]);document.getElementById('stItem').textContent=stSeq[0].e;document.getElementById('stInfo').textContent='Round 1 / 10 • Score: 0';}stReset();
+function stAnswer(bin){const cur=stSeq[stRound%stSeq.length];if(cur.t===bin){stScore++;points++;save('sg_points',points);renderStats();}stRound++;if(stRound>=10){alert('Game over! Score '+stScore+'/10');stReset();return;}document.getElementById('stItem').textContent=stSeq[stRound%stSeq.length].e;document.getElementById('stInfo').textContent='Round '+(stRound+1)+' / 10 • Score: '+stScore;}
+
+const quickQuestions=[
+  {q:'Which bin for vegetable peels?',a:'Wet',options:['Wet','Dry','E‑waste','Glass']},
+  {q:'Clean plastic bottle goes to…',a:'Dry',options:['Wet','Dry','Hazardous','Medical']},
+  {q:'Bulb/tube‑light is…',a:'E‑waste',options:['Wet','Dry','E‑waste','Compost']},
+  {q:'Which helps soil?',a:'Compost',options:['Metal','Compost','Glass','Rubber']}
+];
+function renderQQ(){const wrap=document.getElementById('qqWrap');wrap.innerHTML=quickQuestions.map((q,i)=>`<div class='card' style='margin:8px 0'><b>Q${i+1}.</b> ${q.q}<div style='margin-top:.25rem'>${q.options.map(o=>`<label style='display:inline-block;margin:4px 8px 0 0'><input type='radio' name='qq${i}' value='${o}'/> ${o}</label>`).join('')}</div><button class='btn primary' onclick='submitQQ(${i},"${q.a}")'>Submit</button></div>`).join('');}
+renderQQ();
+function submitQQ(i,correct){const chosen=[...document.querySelectorAll(`input[name='qq${i}']`)].find(r=>r.checked);if(!chosen){alert('Pick an option');return;}if(chosen.value===correct){points++;save('sg_points',points);renderStats();alert('Correct! +1 point');}else alert('Not quite!');}
+
+function setupMemory(){const pairs=['🍌','🍃','📄','🥤','🐟','🥫'];const deck=shuffle([...pairs,...pairs]);const grid=document.getElementById('memGrid');grid.innerHTML='';let open=[];let matches=0;deck.forEach((e,i)=>{const cell=document.createElement('button');cell.className='card';cell.style.minHeight='100px';cell.textContent='❔';cell.dataset.e=e;cell.onclick=()=>{if(cell.classList.contains('done')||open.includes(cell))return;cell.textContent=e;open.push(cell);if(open.length===2){if(open[0].dataset.e===open[1].dataset.e){open.forEach(c=>{c.classList.add('done');c.style.opacity=.6;});open=[];matches++;points++;save('sg_points',points);renderStats();document.getElementById('memInfo').textContent='Matches: '+matches;}else{setTimeout(()=>{open.forEach(c=>c.textContent='❔');open=[];},600);}}};grid.appendChild(cell);});}
+setupMemory();
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+</body></html>

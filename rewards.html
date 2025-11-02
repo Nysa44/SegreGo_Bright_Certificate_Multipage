@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGo – Rewards</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head><body>
+<header class="app">
+      <div class="brand"><span class="logo">🌱</span><strong>SegreGo</strong></div>
+      <nav><a href="index.html" class="">🌿 Levels</a><a href="games.html" class="">🎮 Games</a><a href="rewards.html" class="active">🎁 Rewards</a><a href="course.html" class="">📚 Course</a><a href="pickup.html" class="">🚚 Pick-up</a></nav>
+      <div class="row">
+        <span class="tag">👑 <b id="crownCount">0</b></span>
+        <span class="tag">⭐ <b id="pointCount">0</b></span>
+        <button class="btn ghost" id="btnCert" onclick="askNameAndOpenCert(true)" disabled>🎓 Certificate</button>
+      </div>
+    </header>
+<main class="container">
+  <h2>Rewards</h2>
+  <p class="muted">Attach the required activity photo to unlock an offer. Points are deducted on claim.</p>
+  <div id="rewardsList" class="grid two"></div>
+  <h3>Your Claimed Rewards</h3>
+  <div id="claimedList" class="grid two"></div>
+</main>
+<footer>SegreGo © 2025 • Learn • Play • Earn • Sustain</footer>
+<script>
+
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}
+
+let claimed = load('sg_claimed',[]);
+
+function renderRewards(){
+  const list=document.getElementById('rewardsList'); list.innerHTML='';
+  offers.forEach(o=>{
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<div><b>${o.off} at ${o.brand}</b><div class='muted'>Cost: ${o.cost} pts</div><p>${o.req}</p></div>
+    <div class='row'><input type='file' accept='image/*' id='proof${o.id}'><button class='btn primary'>Claim</button></div>`;
+    card.querySelector('button').onclick=()=>claimOffer(o.id);
+    list.appendChild(card);
+  });
+  renderClaimed();
+}
+function claimOffer(id){
+  const o=offers.find(x=>x.id===id);
+  if(points<o.cost){alert('Not enough points.');return;}
+  const file=document.getElementById('proof'+id).files[0]; if(!file){alert('Attach the required photo.');return;}
+  const reader=new FileReader(); reader.onload=()=>{points-=o.cost;offers=offers.filter(x=>x.id!==id);claimed.push({brand:o.brand,off:o.off,img:reader.result});save('sg_points',points);save('sg_offers',offers);save('sg_claimed',claimed);renderStats();renderRewards();alert('Offer claimed! 🎉');}; reader.readAsDataURL(file);
+}
+function renderClaimed(){
+  const c=document.getElementById('claimedList'); if(claimed.length===0){c.innerHTML='<p class="muted">No rewards claimed yet.</p>';return;}
+  c.innerHTML=claimed.map(r=>`<div class='card'><div><b>${r.off}</b> at ${r.brand}</div><img src='${r.img}' style='max-height:140px;border-radius:10px;margin-top:6px'></div>`).join('');
+}
+renderRewards();
+</script>
+</body></html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGo – Levels</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head><body>
+<header class="app">
+      <div class="brand"><span class="logo">🌱</span><strong>SegreGo</strong></div>
+      <nav><a href="index.html" class="active">🌿 Levels</a><a href="games.html" class="">🎮 Games</a><a href="rewards.html" class="">🎁 Rewards</a><a href="course.html" class="">📚 Course</a><a href="pickup.html" class="">🚚 Pick-up</a></nav>
+      <div class="row">
+        <span class="tag">👑 <b id="crownCount">0</b></span>
+        <span class="tag">⭐ <b id="pointCount">0</b></span>
+        <button class="btn ghost" id="btnCert" onclick="askNameAndOpenCert(true)" disabled>🎓 Certificate</button>
+      </div>
+    </header>
+<main class="container">
+  <div class="hero"><h2>Grow your SegreGo journey</h2><p>Complete levels to earn crowns every 5 levels and unlock your certificate at 20.</p></div>
+  <div id="levelsGrid" class="grid auto"></div>
+  <div class="legend"><span>✅ Completed</span><span>📷 Photo added</span><span>❓ Quiz done</span></div>
+  <div id="levelDetail" class="card"></div>
+</main>
+<dialog id="certModal" class="modal">
+  <div class="cert-paper">
+    <div class="cert-head"><span class="cert-logo">🌱</span><div class="cert-title">SegreGo Certificate of Completion</div></div>
+    <div class="cert-line"></div>
+    <div class="cert-body">
+      <div id="certCongrats" style="font-weight:700;margin-bottom:6px">🎉 Congratulations!</div>
+      <div>Certificate awarded to</div>
+      <div id="certName" class="cert-name">Explorer</div>
+      <div>for successfully completing <b>all 20 levels</b> of SegreGo.</div>
+      <div class="cert-meta">
+        <div><b>Date:</b> <span id="certDate"></span></div>
+        <div class="sig"><b>Authorized by</b><br/>SegreGo Team</div>
+      </div>
+      <div class="print-tip" style="margin-top:10px">Watermark: SegreGo 2025 • Use your browser Print dialog to “Save as PDF”.</div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn ghost" onclick="document.getElementById('certModal').close()">Close</button>
+    </div>
+  </div>
+</dialog>
+<footer>SegreGo © 2025 • Learn • Play • Earn • Sustain</footer>
+<script>
+
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}
+
+
+const longIntros = ["Level 1 \u2013 Wet vs Dry Foundations: Learn the core difference between wet (organic, moisture-rich) and dry (recyclable, low-moisture) waste. Activity: identify 5 wet items (peels, tea leaves, scrapings, eggshells, wilted flowers) and 5 dry items (paper cartons, cardboard sleeves, clean plastic trays, metal cans, glass jars). Why it matters: wet waste is perfect for composting and must be kept out of dry bins to avoid contaminating recyclables. Pro tip: keep a tiny countertop caddy for peels so segregation is effortless.", "Level 2 \u2013 Daily Bin Practice: Set up two small containers for a full day\u2019s practice. Line wet with newspaper to absorb moisture; keep dry unlined. Learn the 3\u2013rinse method using gray water. Track cross\u2011contamination moments and fix them.", "Level 3 \u2013 Plastics & Paper: Decode plastics (PET 1, HDPE 2) and keep paper dry. Activity: flatten 3 boxes, remove plastic liners, rubber\u2011band magazines. Food\u2011stained paper often can\u2019t be recycled\u2014learn alternatives.", "Level 4 \u2013 Glass & Metal: Handle glass safely; bulbs/tubes are not regular glass. Activity: clean 3 jars for reuse; crush 2 cans safely with shoes, never hands.", "Level 5 \u2013 Compost Basics: Greens vs browns, the smell test, aeration. Activity: start a mini\u2011compost layering peels and dry leaves; avoid meat/dairy.", "Level 6 \u2013 E\u2011waste Toolkit: Identify chargers, cables, batteries, and remotes as e\u2011waste. Create a labeled box; learn hazards of heavy metals and authorized centers.", "Level 7 \u2013 Sanitary & Biomedical: Color\u2011coded disposal and double\u2011bagging to protect handlers. Keep out of recycling streams.", "Level 8 \u2013 Multi\u2011layer Packaging: Foil\u2011plastic pouches are hard to recycle. Collect and drop at brand take\u2011back points; prefer larger packs and jars.", "Level 9 \u2013 Local Rules & MRF Flow: Find your ward\u2019s schedule and MRF process. Save the weekly calendar; set reminders for special waste days.", "Level 10 \u2013 Waste Audit Milestone: Measure one day\u2019s wet and dry output; list top 3 items to reduce. Celebrate crown #2!", "Level 11 \u2013 Building Playbook: Label bins with icons; share a one\u2011pager; conduct a 5\u2011minute huddle to align everyone.", "Level 12 \u2013 Bulky Waste: How to book municipal pickup for furniture/mattress; safe temporary storage checklist.", "Level 13 \u2013 Garden Waste: Mulching vs compost; start a leaf\u2011mould corner and water occasionally to speed decomposition.", "Level 14 \u2013 Used Cooking Oil: Never pour into drains; collect in a sealed bottle; find biodiesel collection points.", "Level 15 \u2013 Plastic Footprint Milestone: Track single\u2011use items; assemble a reusables kit; share before/after photo for crown #3!", "Level 16 \u2013 Hazard Symbols: Identify flammable, corrosive, toxic labels; create a safe store for paints/solvents with ventilation.", "Level 17 \u2013 School/Office Drive: Posters, bin placement, volunteer monitors; log participation for a week.", "Level 18 \u2013 Event Waste Plan: Map stalls; set up wet/dry/e\u2011waste stations; vendor pledge for reusable serveware.", "Level 19 \u2013 Zero\u2011waste Kit Mastery: Build and photograph your kit; practice polite refusal phrases; tally items avoided.", "Level 20 \u2013 Finale & Pledge: Compile a photo collage; write your pledge; set quarterly review reminders; unlock your certificate!"];
+
+function badgeFor(n){const icons=['🌱','🍃','🍀','🌿','🌳'];return icons[Math.floor((n-1)/4)]||'🌱';}
+
+function renderLevels(){const grid=document.getElementById('levelsGrid');grid.innerHTML='';levels.forEach((lv,idx)=>{const n=idx+1;const b=document.createElement('button');b.className='level-card';b.innerHTML=`<div class="big">${badgeFor(n)}</div><div><b>Level ${n}</b></div><div class='badges'>${lv.done?'✅':''} ${lv.photo?'📷':''} ${lv.quiz?'❓':''}</div>`;b.onclick=()=>openLevel(n);grid.appendChild(b);});openLevel(1);}
+
+function openLevel(n){const i=n-1;const s=levels[i];const box=document.getElementById('levelDetail');const intro=longIntros[i];const q=quickQuestions[n%quickQuestions.length];box.innerHTML=`
+  <h3>Level ${n}</h3>
+  <p class='muted' style='line-height:1.75'>${intro}</p>
+  <div class='grid two'>
+    <div>
+      <h4>Attach photos (optional)</h4>
+      <input type='file' accept='image/*' onchange='attachPhoto(${i}, this.files[0])'/>
+      ${s.photo?`<p>📷 Photo added!</p><img src='${s.photoData||''}' alt='photo' style='max-height:180px;border-radius:10px;margin-top:6px'/>`:''}
+    </div>
+    <div>
+      <h4>Quiz (optional)</h4>
+      <div>${q.q}</div>
+      ${q.options.map(o=>`<label style='display:block;margin:.25rem 0'><input type='radio' name='q${n}' value='${o}'/> ${o}</label>`).join('')}
+      <button class='btn primary' onclick="submitQuiz(${i}, '${q.a}', 'q${n}')">Submit</button>
+      ${s.quiz?'<p>✅ Quiz completed!</p>':''}
+    </div>
+  </div>
+  <div class='row' style='margin-top:10px'>
+    <button class='btn primary' onclick='completeLevel(${i})'>Mark Level Complete</button>
+    ${s.done?'<span>✅ Completed</span>':''}
+    <span class='muted'>Crown every 5 levels</span>
+  </div>`;}
+
+function attachPhoto(index,file){if(!file)return;const reader=new FileReader();reader.onload=()=>{levels[index].photo=true;levels[index].photoData=reader.result;points+=2;save('sg_levels',levels);save('sg_points',points);renderStats();renderLevels();openLevel(index+1);};reader.readAsDataURL(file);}
+function submitQuiz(index,correct,name){const chosen=[...document.querySelectorAll(`input[name='${name}']`)].find(r=>r.checked);if(!chosen){alert('Choose an answer or skip.');return;}if(chosen.value===correct){levels[index].quiz=true;points+=3;alert('Nice! +3 points');}else{alert('Try again!');return;}save('sg_levels',levels);save('sg_points',points);renderStats();renderLevels();openLevel(index+1);}
+function completeLevel(index){if(!levels[index].done)points+=5;levels[index].done=true;save('sg_levels',levels);save('sg_points',points);renderStats();renderLevels();openLevel(index+1);if((index+1)%5===0)alert('👑 Crown unlocked!');if(allDone()){document.getElementById('btnCert').disabled=false;askNameAndOpenCert(true);}}
+
+const quickQuestions=[
+  {q:'Which bin for vegetable peels?',a:'Wet',options:['Wet','Dry','E‑waste','Glass']},
+  {q:'Clean plastic bottle goes to…',a:'Dry',options:['Wet','Dry','Hazardous','Medical']},
+  {q:'Bulb/tube‑light is…',a:'E‑waste',options:['Wet','Dry','E‑waste','Compost']},
+  {q:'Which helps soil?',a:'Compost',options:['Metal','Compost','Glass','Rubber']}
+];
+
+renderLevels();
+</script>
+</body></html>

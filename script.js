@@ -1,0 +1,41 @@
+
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}

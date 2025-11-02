@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegreGo – Course</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head><body>
+<header class="app">
+      <div class="brand"><span class="logo">🌱</span><strong>SegreGo</strong></div>
+      <nav><a href="index.html" class="">🌿 Levels</a><a href="games.html" class="">🎮 Games</a><a href="rewards.html" class="">🎁 Rewards</a><a href="course.html" class="active">📚 Course</a><a href="pickup.html" class="">🚚 Pick-up</a></nav>
+      <div class="row">
+        <span class="tag">👑 <b id="crownCount">0</b></span>
+        <span class="tag">⭐ <b id="pointCount">0</b></span>
+        <button class="btn ghost" id="btnCert" onclick="askNameAndOpenCert(true)" disabled>🎓 Certificate</button>
+      </div>
+    </header>
+<main class="container">
+  <h2>Course: Waste Segregation Essentials</h2>
+  <p class="muted">These are YouTube no‑cookie embeds. If your browser blocks embeds, tap “Open on YouTube”.</p>
+  <div class="grid two">
+    <div class="card">
+      <h3>Wet vs Dry Waste</h3>
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=wet%20vs%20dry%20waste%20segregation" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      <div class="row"><a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=wet+vs+dry+waste+segregation">Open on YouTube</a></div>
+    </div>
+    <div class="card">
+      <h3>E‑waste & Hazardous</h3>
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=e-waste%20disposal%20for%20households" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      <div class="row"><a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=e-waste+disposal+for+households">Open on YouTube</a></div>
+    </div>
+    <div class="card">
+      <h3>Composting Basics</h3>
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=composting%20for%20beginners" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      <div class="row"><a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=composting+for+beginners">Open on YouTube</a></div>
+    </div>
+    <div class="card">
+      <h3>Reduce Single‑use Plastic</h3>
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed?listType=search&list=reduce%20single%20use%20plastic%20tips" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+      <div class="row"><a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=reduce+single+use+plastic+tips">Open on YouTube</a></div>
+    </div>
+  </div>
+</main>
+<footer>SegreGo © 2025 • Learn • Play • Earn • Sustain</footer>
+<script>
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d;}catch{return d;}};
+let points = load('sg_points',0);
+let levels = load('sg_levels', Array.from({length:20},()=>({done:false,photo:false,quiz:false,photoData:null})) );
+let offers = load('sg_offers',[
+  {id:1, brand:'H&M', off:'20%', req:'Photo: donating neatly packed old clothes.', cost:20},
+  {id:2, brand:'Sephora', off:'30%', req:'Photo: returning empty cosmetic containers.', cost:40},
+  {id:3, brand:'Local Café', off:'Free drink', req:'Photo: using your reusable cup.', cost:10},
+  {id:4, brand:'SuperMart', off:'₹200 coupon', req:'Photo: carrying cloth bag while shopping.', cost:15},
+  {id:5, brand:'EcoLaundry', off:'15% off', req:'Photo: segregating wet/dry at home.', cost:12}
+]);
+let bookings = load('sg_bookings', []);
+let username = load('sg_name','');
+
+function crowns(){ return Math.floor(levels.filter(l=>l.done).length/5); }
+function allDone(){ return levels.every(l=>l.done); }
+function renderStats(){
+  const p=document.getElementById('pointCount'); if(p)p.textContent=points;
+  const c=document.getElementById('crownCount'); if(c)c.textContent=crowns();
+  const b=document.getElementById('btnCert'); if(b)b.disabled=!allDone();
+}
+document.addEventListener('DOMContentLoaded', renderStats);
+
+function askNameAndOpenCert(forcePrompt=false){
+  if(!allDone() && !forcePrompt){ alert('Finish all 20 levels to unlock your certificate!'); return; }
+  let name = username || '';
+  name = prompt('Enter your name for the certificate:', name) ?? name;
+  username = (name && name.trim()) ? name.trim() : (username||'Explorer');
+  save('sg_name', username);
+  const modal = document.getElementById('certModal');
+  if(modal){
+    const date = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('certName').textContent = username;
+    document.getElementById('certCongrats').textContent = `🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`;
+    document.getElementById('certDate').textContent = date;
+    modal.showModal();
+  } else {
+    alert(`🎉 Congratulations ${username}! You’ve successfully completed all 20 levels of SegreGo.`);
+  }
+}
+</script>
+</body></html>
